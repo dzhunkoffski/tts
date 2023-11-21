@@ -11,7 +11,7 @@
     "arch": {
         "type": "FastSpeechV1",
         "args": {
-            "max_len": 5000,
+            "max_len": 25000,
             "pad_idx": 0,
             "n_blocks": 3,
             "n_heads": 2,
