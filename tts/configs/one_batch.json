@@ -13,7 +13,7 @@
         "args": {
             "max_len": 5000,
             "pad_idx": 0,
-            "n_blocks": 6,
+            "n_blocks": 3,
             "n_heads": 2,
             "fft_kernel": 3,
             "lr_kernel": 3,
