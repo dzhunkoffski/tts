@@ -1,5 +1,6 @@
 import torch
 from torch import nn
+import torch.nn.functional as F
 
 from tts.model.utils import PositionalEncoding, Conv1D
 from tts import waveglow
@@ -7,6 +8,20 @@ from tts import text
 from tts import audio
 from tts import vocode_utils
 from tts import waveglow
+
+def get_non_pad_mask(seq):
+    assert seq.dim() == 2
+    return seq.ne(0).type(torch.float).unsqueeze(-1)
+
+def get_attn_key_pad_mask(seq_k, seq_q):
+    ''' For masking out the padding part of key sequence. '''
+    # Expand to fit the shape of key query attention matrix.
+    len_q = seq_q.size(1)
+    padding_mask = seq_k.eq(0)
+    padding_mask = padding_mask.unsqueeze(
+        1).expand(-1, len_q, -1)  # b x lq x lk
+
+    return padding_mask
 
 class FFTBlock(nn.Module):
     def __init__(self, embed_dim: int, num_heads: int, kernel_size: int, dropout: float = 0) -> None:
@@ -29,20 +44,26 @@ class FFTBlock(nn.Module):
         self.lay_norm2 = nn.LayerNorm(embed_dim)
         self.dropout = nn.Dropout(p=dropout)
     
-    def forward(self, x):
+    def forward(self, x, non_pad_mask = None, attn_mask = None):
         q = self.q_proj(x)
         k = self.k_proj(x)
         v = self.v_proj(x)
 
-        output, _ = self.multihead_attention(q, k, v)
+        output, _ = self.multihead_attention(q, k, v, attn_mask=attn_mask)
         output = self.dropout(output)
         output = x + output
         x = self.lay_norm1(output)
+
+        if non_pad_mask is not None:
+            x = x * non_pad_mask
 
         output = self.conv(x)
         output = self.dropout(output)
         output = x + output
         x = self.lay_norm2(output)
+
+        if non_pad_mask is not None:
+            x = x * non_pad_mask
 
         return x
 
@@ -102,15 +123,16 @@ class FastSpeechV1(nn.Module):
     def __init__(self, max_len: int, vocab_size: int, pad_idx: int, n_blocks: int, n_heads: int, fft_kernel: int, lr_kernel: int, embed_dim: int, n_mels: int, dropout: float = 0.0) -> None:
         super().__init__()
 
+        self.n_blocks = n_blocks
         self.embedding_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embed_dim, padding_idx=pad_idx)
         self.pos_enc = PositionalEncoding(embed_dim=embed_dim, max_len=max_len)
-        self.phoneme_blocks = nn.Sequential(*[
+        self.phoneme_blocks = nn.ModuleList([
             FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
         ])
         # TODO: padding attention masks
         self.duration_predictor = DurationPredictor(embed_dim=embed_dim, kernel_size=lr_kernel, dropout=dropout)
         self.LR = LengthRegulator()
-        self.mel_blocks = nn.Sequential(*[
+        self.mel_blocks = nn.ModuleList([
             FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
         ])
         self.mel_linear = nn.Linear(embed_dim, n_mels)
@@ -124,13 +146,21 @@ class FastSpeechV1(nn.Module):
     def forward(self, text, duration, **batch):
         x = self.embedding_layer(text)
         x = self.pos_enc(x)
-        x = self.phoneme_blocks(x)
+        # x = self.phoneme_blocks(x)
+        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
+        non_pad_mask = get_non_pad_mask(x).to(x.device)
+        for i in range(self.n_blocks):
+            x = self.phoneme_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
         pred_durations = self.duration_predictor(x)
         x = self.LR(x, duration)
         x = self.pos_enc(x)
-        x = self.mel_blocks(x)
+        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
+        non_pad_mask = get_non_pad_mask(x).to(x.device)
+        # x = self.mel_blocks(x)
+        for i in range(self.n_blocks):
+            x = self.mel_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
         predicted_mel = self.mel_linear(x)
-        pred_durations = torch.maximum(pred_durations, torch.ones_like(pred_durations))
+        pred_durations = F.relu(pred_durations)
         # TODO: make sure output predicted mel the same as target mel
         return {"pred_mel": predicted_mel, "pred_duration": pred_durations}
     
@@ -141,13 +171,21 @@ class FastSpeechV1(nn.Module):
         x = x.to(next(self.parameters()).device)
         x = self.embedding_layer(x)
         x = self.pos_enc(x)
-        x = self.phoneme_blocks(x)
+        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
+        non_pad_mask = get_non_pad_mask(x).to(x.device)
+        for i in range(self.n_blocks):
+            x = self.phoneme_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
+        # x = self.phoneme_blocks(x)
         pred_durations = self.duration_predictor(x)
         pred_durations = torch.maximum(pred_durations, torch.ones_like(pred_durations))
         pred_durations = pred_durations.int()
         x = self.LR(x, pred_durations)
         x = self.pos_enc(x)
-        x = self.mel_blocks(x)
+        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
+        non_pad_mask = get_non_pad_mask(x).to(x.device)
+        # x = self.mel_blocks(x)
+        for i in range(self.n_blocks):
+            x = self.mel_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
         predicted_mel = self.mel_linear(x)
         predicted_mel = torch.permute(predicted_mel, (0, 2, 1))
         audio = waveglow.inference.inference_audio(predicted_mel, self.vocoder)
