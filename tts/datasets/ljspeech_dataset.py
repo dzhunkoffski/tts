@@ -48,7 +48,7 @@ class LJSpeechDataset(Dataset):
         return len(self.texts)
     
     def load_audio(self, path):
-        audio_tensor, sr = torchaudio.load(path, backend=self.backend)
+        audio_tensor, sr = torchaudio.load(path)
         audio_tensor = audio_tensor[0, :]
         if sr != self.sample_rate:
             audio_tensor = torchaudio.functional.resample(audio_tensor, sr, self.sample_rate)
