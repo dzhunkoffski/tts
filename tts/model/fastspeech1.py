@@ -114,7 +114,6 @@ class FastSpeechV1(nn.Module):
             FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
         ])
         self.mel_linear = nn.Linear(embed_dim, n_mels)
-        self.positivator = nn.ReLU()
         self.vocoder = self._load_vocoder()
 
     def _load_vocoder(glow_state_dict):
@@ -131,7 +130,6 @@ class FastSpeechV1(nn.Module):
         x = self.pos_enc(x)
         x = self.mel_blocks(x)
         predicted_mel = self.mel_linear(x)
-        predicted_mel = self.positivator(predicted_mel)
         pred_durations = torch.maximum(pred_durations, torch.ones_like(pred_durations))
         # TODO: make sure output predicted mel the same as target mel
         return {"pred_mel": predicted_mel, "pred_duration": pred_durations}
@@ -151,7 +149,6 @@ class FastSpeechV1(nn.Module):
         x = self.pos_enc(x)
         x = self.mel_blocks(x)
         predicted_mel = self.mel_linear(x)
-        predicted_mel = self.positivator(predicted_mel)
         predicted_mel = torch.permute(predicted_mel, (0, 2, 1))
         audio = waveglow.inference.inference_audio(predicted_mel, self.vocoder)
         return audio
