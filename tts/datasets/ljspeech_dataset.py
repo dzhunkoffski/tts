@@ -73,7 +73,7 @@ class LJSpeechDataset(Dataset):
         duration = torch.tensor(duration)
 
         return {
-            "raw_text": self.texts[item][:-1],
+            "raw_text": self.texts[item],
             "text": character, 
             "duration": duration, 
             "mel_target": audio_tensor_spec,

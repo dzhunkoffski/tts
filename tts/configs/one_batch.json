@@ -13,13 +13,13 @@
         "args": {
             "max_len": 5000,
             "pad_idx": 0,
-            "n_blocks": 4,
+            "n_blocks": 6,
             "n_heads": 2,
             "fft_kernel": 3,
             "lr_kernel": 3,
             "embed_dim": 384,
             "n_mels": 80,
-            "conv_channels": 1024
+            "conv_channels": 1536
         }
     },
     "data": {
