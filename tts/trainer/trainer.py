@@ -183,8 +183,8 @@ class Trainer(BaseTrainer):
             # self._log_spectrogram(batch["spectrogram"])
 
         # add histogram of model parameters to the tensorboard
-        for name, p in self.model.named_parameters():
-            self.writer.add_histogram(name, p, bins="auto")
+        # for name, p in self.model.named_parameters():
+        #     self.writer.add_histogram(name, p, bins="auto")
         return self.evaluation_metrics.result()
 
     def _progress(self, batch_idx):
@@ -203,7 +203,7 @@ class Trainer(BaseTrainer):
             is_train: bool,
             raw_text,
             loss,
-            examples_to_log=2,
+            examples_to_log=7,
             *args,
             **kwargs,
     ):
@@ -215,7 +215,7 @@ class Trainer(BaseTrainer):
                 'A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest',
                 'Massachusetts Institute of Technology may be best known for its math, science and engineering education',
                 'Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space',
-                "I'm sorry, Dave, I'm afraid I can't do that.",
+                "I am sorry, Dave, I am afraid I can't do that.",
                 "Just what do you think you're doing, Dave? Dave, I really think I'm entitled to an answer to that question.",
                 "Dai-sy, dai-sy, give me your answer, do, I'm half cra-zy, all for the love of you. It won't be a sty-lish mar-riage, I can't a-fford a car-riage. But you'll look sweet upon the seat of a bicycle - built - for - two."
             ]

@@ -25,7 +25,7 @@
     },
     "data": {
         "train": {
-            "batch_size": 10,
+            "batch_size": 16,
             "num_workers": 4,
             "datasets": [
                 {
@@ -44,7 +44,7 @@
             ]
         },
         "val": {
-            "batch_size": 10,
+            "batch_size": 16,
             "num_workers": 4,
             "datasets": [
                 {
@@ -57,7 +57,7 @@
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
                         "sr": 22050,
-                        "dataset_size": 1000
+                        "dataset_size": 100
                     }
                 }
             ]
