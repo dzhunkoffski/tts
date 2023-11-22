@@ -10,7 +10,7 @@ from tts import vocode_utils
 from tts import waveglow
 
 class FFTBlock(nn.Module):
-    def __init__(self, embed_dim: int, num_heads: int, kernel_size: int, dropout: float = 0) -> None:
+    def __init__(self, embed_dim: int, num_heads: int, kernel_size: int, n_channels: int, dropout: float = 0) -> None:
         super().__init__()
         
         self.q_proj = nn.Linear(embed_dim, embed_dim)
@@ -23,9 +23,9 @@ class FFTBlock(nn.Module):
         )
         self.lay_norm1 = nn.LayerNorm(embed_dim)
         self.conv = nn.Sequential(
-            Conv1D(in_channels=embed_dim, out_channels=embed_dim, kernel_size=kernel_size, padding='same'),
+            Conv1D(in_channels=embed_dim, out_channels=n_channels, kernel_size=kernel_size, padding='same'),
             nn.ReLU(),
-            Conv1D(in_channels=embed_dim, out_channels=embed_dim, kernel_size=kernel_size, padding='same')
+            Conv1D(in_channels=n_channels, out_channels=embed_dim, kernel_size=kernel_size, padding='same')
         )
         self.lay_norm2 = nn.LayerNorm(embed_dim)
         self.dropout = nn.Dropout(p=dropout)
@@ -99,19 +99,19 @@ class LengthRegulator(nn.Module):
         return output
 
 class FastSpeechV1(nn.Module):
-    def __init__(self, max_len: int, vocab_size: int, pad_idx: int, n_blocks: int, n_heads: int, fft_kernel: int, lr_kernel: int, embed_dim: int, n_mels: int, dropout: float = 0.0) -> None:
+    def __init__(self, max_len: int, vocab_size: int, pad_idx: int, n_blocks: int, n_heads: int, fft_kernel: int, lr_kernel: int, embed_dim: int, n_mels: int, conv_channels: int, dropout: float = 0.0) -> None:
         super().__init__()
 
         self.n_blocks = n_blocks
         self.embedding_layer = nn.Embedding(num_embeddings=vocab_size, embedding_dim=embed_dim, padding_idx=pad_idx)
         self.pos_enc = PositionalEncoding(embed_dim=embed_dim, max_len=max_len)
         self.phoneme_blocks = nn.ModuleList([
-            FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
+            FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout, n_channels=conv_channels) for _ in range(n_blocks)
         ])
         self.duration_predictor = DurationPredictor(embed_dim=embed_dim, kernel_size=lr_kernel, dropout=dropout)
         self.LR = LengthRegulator()
         self.mel_blocks = nn.ModuleList([
-            FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
+            FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout, n_channels=conv_channels) for _ in range(n_blocks)
         ])
         self.mel_linear = nn.Linear(embed_dim, n_mels)
         self.vocoder = self._load_vocoder()

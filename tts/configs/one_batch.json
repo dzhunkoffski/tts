@@ -11,14 +11,15 @@
     "arch": {
         "type": "FastSpeechV1",
         "args": {
-            "max_len": 25000,
+            "max_len": 5000,
             "pad_idx": 0,
-            "n_blocks": 3,
+            "n_blocks": 4,
             "n_heads": 2,
             "fft_kernel": 3,
             "lr_kernel": 3,
             "embed_dim": 384,
-            "n_mels": 80
+            "n_mels": 80,
+            "conv_channels": 1024
         }
     },
     "data": {
