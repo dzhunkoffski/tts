@@ -9,20 +9,6 @@ from tts import audio
 from tts import vocode_utils
 from tts import waveglow
 
-def get_non_pad_mask(seq):
-    assert seq.dim() == 2
-    return seq.ne(0).type(torch.float).unsqueeze(-1)
-
-def get_attn_key_pad_mask(seq_k, seq_q):
-    ''' For masking out the padding part of key sequence. '''
-    # Expand to fit the shape of key query attention matrix.
-    len_q = seq_q.size(1)
-    padding_mask = seq_k.eq(0)
-    padding_mask = padding_mask.unsqueeze(
-        1).expand(-1, len_q, -1)  # b x lq x lk
-
-    return padding_mask
-
 class FFTBlock(nn.Module):
     def __init__(self, embed_dim: int, num_heads: int, kernel_size: int, dropout: float = 0) -> None:
         super().__init__()
@@ -129,7 +115,6 @@ class FastSpeechV1(nn.Module):
         self.phoneme_blocks = nn.ModuleList([
             FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout) for _ in range(n_blocks)
         ])
-        # TODO: padding attention masks
         self.duration_predictor = DurationPredictor(embed_dim=embed_dim, kernel_size=lr_kernel, dropout=dropout)
         self.LR = LengthRegulator()
         self.mel_blocks = nn.ModuleList([
@@ -138,56 +123,44 @@ class FastSpeechV1(nn.Module):
         self.mel_linear = nn.Linear(embed_dim, n_mels)
         self.vocoder = self._load_vocoder()
 
-    def _load_vocoder(glow_state_dict):
+    def _load_vocoder(self):
         vocoder = vocode_utils.get_WaveGlow()
+        vocoder = vocoder.cuda()
         return vocoder
 
     
     def forward(self, text, duration, **batch):
         x = self.embedding_layer(text)
         x = self.pos_enc(x)
-        # x = self.phoneme_blocks(x)
-        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
-        non_pad_mask = get_non_pad_mask(x).to(x.device)
         for i in range(self.n_blocks):
-            x = self.phoneme_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
+            x = self.phoneme_blocks[i](x)
         pred_durations = self.duration_predictor(x)
         x = self.LR(x, duration)
         x = self.pos_enc(x)
-        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
-        non_pad_mask = get_non_pad_mask(x).to(x.device)
-        # x = self.mel_blocks(x)
         for i in range(self.n_blocks):
-            x = self.mel_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
+            x = self.mel_blocks[i](x)
         predicted_mel = self.mel_linear(x)
+        predicted_mel = torch.permute(predicted_mel, (0, 2, 1))
         pred_durations = F.relu(pred_durations)
-        # TODO: make sure output predicted mel the same as target mel
         return {"pred_mel": predicted_mel, "pred_duration": pred_durations}
     
     @torch.inference_mode()
-    def text2voice(self, text: str, dataset):
+    def text2mel(self, text: str, dataset):
         x = dataset.text2tokens(text)
         x = x.unsqueeze(0)
         x = x.to(next(self.parameters()).device)
         x = self.embedding_layer(x)
         x = self.pos_enc(x)
-        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
-        non_pad_mask = get_non_pad_mask(x).to(x.device)
         for i in range(self.n_blocks):
-            x = self.phoneme_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
-        # x = self.phoneme_blocks(x)
+            x = self.phoneme_blocks[i](x)
         pred_durations = self.duration_predictor(x)
         pred_durations = torch.maximum(pred_durations, torch.ones_like(pred_durations))
         pred_durations = pred_durations.int()
         x = self.LR(x, pred_durations)
         x = self.pos_enc(x)
-        slf_attn_mask = get_attn_key_pad_mask(seq_k=x, seq_q=x).to(x.device)
-        non_pad_mask = get_non_pad_mask(x).to(x.device)
-        # x = self.mel_blocks(x)
         for i in range(self.n_blocks):
-            x = self.mel_blocks[i](x, non_pad_mask=non_pad_mask, attn_mask=slf_attn_mask)
+            x = self.mel_blocks[i](x)
         predicted_mel = self.mel_linear(x)
-        predicted_mel = torch.permute(predicted_mel, (0, 2, 1))
         audio = waveglow.inference.inference_audio(predicted_mel, self.vocoder)
         return audio
 

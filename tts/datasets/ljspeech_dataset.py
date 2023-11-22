@@ -65,7 +65,7 @@ class LJSpeechDataset(Dataset):
         character = text_to_sequence(character, self.text_cleaners)
         character = torch.LongTensor(character)
 
-        audio_wav = self.load_audio(self.wavs[item])
+        # audio_wav = self.load_audio(self.wavs[item])
         audio_tensor_spec = np.load(self.mel_specs[item])
         audio_tensor_spec = torch.tensor(audio_tensor_spec).t()
 
