@@ -202,7 +202,7 @@ class Trainer(BaseTrainer):
             is_train: bool,
             raw_text,
             loss,
-            examples_to_log=2,
+            examples_to_log=5,
             *args,
             **kwargs,
     ):
