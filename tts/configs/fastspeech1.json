@@ -2,7 +2,7 @@
     "name": "fast_speech_v1",
     "n_gpu": 1,
     "preprocessing": {
-        "sr": 16000
+        "sr": 22050
     },
     "augmentations": {
         "wave": [],
@@ -18,7 +18,9 @@
             "fft_kernel": 3,
             "lr_kernel": 3,
             "embed_dim": 384,
-            "n_mels": 80
+            "conv_channels": 1536,
+            "n_mels": 80,
+            "dropout": 0.1
         }
     },
     "data": {
@@ -29,15 +31,69 @@
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "ok",
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": true,
-                        "train_size": 1.0,
+                        "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
-                        "mel_spec_path": "ok",
-                        "alignment_path": "ok"
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "sr": 22050,
+                        "dataset_size": 10000
+                    }
+                }
+            ]
+        },
+        "val": {
+            "batch_size": 10,
+            "num_workers": 4,
+            "datasets": [
+                {
+                    "type": "LJSpeechDataset",
+                    "args": {
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
+                        "is_train": false,
+                        "train_size": 0.9,
+                        "text_cleaners": ["english_cleaners"],
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "sr": 22050,
+                        "dataset_size": 1000
                     }
                 }
             ]
         }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args": {
+            "lr": 3e-4
+        }
+    },
+    "loss": {
+        "type": "FastSpeechLoss",
+        "args": {}
+    },
+    "metrics": [],
+    "lr_scheduler": {
+        "type": "OneCycleLR",
+        "args": {
+            "steps_per_epoch": 1000,
+            "epochs": 80,
+            "anneal_strategy": "cos",
+            "max_lr": 3e-4,
+            "pct_start": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 80,
+        "save_dir": "saved/",
+        "save_period": 5,
+        "verbosity": 1,
+        "monitor": "min val_loss",
+        "early_stop": 100,
+        "visualize": "wandb",
+        "wandb_project": "tts",
+        "len_epoch": 1000,
+        "grad_norm_clip": 1
     }
 }

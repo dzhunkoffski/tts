@@ -85,7 +85,9 @@ class LengthRegulator(nn.Module):
     
     def forward(self, hidden_phonems, durations):
         # hidden_fonems: tensor of size [B x SEQ_LEN X HIDDEN_SIZE]
-        # durations: tensor of size [B x TOKEN_LEN]
+        # durations: tensor of size [B x SEQ_LEN]
+        # print(durations.size())
+        # print(hidden_phonems.size())
         expand_max_len = torch.max(
             torch.sum(durations, -1), -1)[0]
         alignment = torch.zeros(durations.size(0),

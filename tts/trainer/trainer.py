@@ -114,7 +114,7 @@ class Trainer(BaseTrainer):
                 self.writer.add_scalar(
                     "learning rate", self.lr_scheduler.get_last_lr()[0]
                 )
-                self._log_predictions(self.model, **batch)
+                self._log_predictions(self.model, is_train=True, **batch)
                 # TODO: Log target and predicted spectrogram
                 # self._log_spectrogram(batch["spectrogram"])
                 self._log_scalars(self.train_metrics)
@@ -127,9 +127,9 @@ class Trainer(BaseTrainer):
         log = last_train_metrics
 
         # XXX: Switch off the evaluation logic
-        # for part, dataloader in self.evaluation_dataloaders.items():
-        #     val_log = self._evaluation_epoch(epoch, part, dataloader)
-        #     log.update(**{f"{part}_{name}": value for name, value in val_log.items()})
+        for part, dataloader in self.evaluation_dataloaders.items():
+            val_log = self._evaluation_epoch(epoch, part, dataloader)
+            log.update(**{f"{part}_{name}": value for name, value in val_log.items()})
 
         return log
 
@@ -151,7 +151,6 @@ class Trainer(BaseTrainer):
         metrics.update("loss", batch["loss"].item())
         for met in self.metrics:
             metrics.update(met.name, met(**batch))
-        batch['is_train'] = is_train
         return batch
 
     def _evaluation_epoch(self, epoch, part, dataloader):
@@ -168,7 +167,9 @@ class Trainer(BaseTrainer):
                     enumerate(dataloader),
                     desc=part,
                     total=len(dataloader),
-            ):
+            ):  
+                # print('mel_path:', batch['mel_spec_path'])
+                # print('alignment_path:', batch['alignment_path'])
                 batch = self.process_batch(
                     batch,
                     is_train=False,
@@ -176,7 +177,7 @@ class Trainer(BaseTrainer):
                 )
             self.writer.set_step(epoch * self.len_epoch, part)
             self._log_scalars(self.evaluation_metrics)
-            self._log_predictions(self.model, **batch)
+            self._log_predictions(self.model, is_train=False, **batch)
 
             # XXX: log spectrogram
             # self._log_spectrogram(batch["spectrogram"])
@@ -202,7 +203,7 @@ class Trainer(BaseTrainer):
             is_train: bool,
             raw_text,
             loss,
-            examples_to_log=5,
+            examples_to_log=2,
             *args,
             **kwargs,
     ):

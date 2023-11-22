@@ -13,13 +13,13 @@
         "args": {
             "max_len": 5000,
             "pad_idx": 0,
-            "n_blocks": 6,
+            "n_blocks": 4,
             "n_heads": 2,
             "fft_kernel": 3,
             "lr_kernel": 3,
             "embed_dim": 384,
             "n_mels": 80,
-            "conv_channels": 1536
+            "conv_channels": 1024
         }
     },
     "data": {
@@ -32,7 +32,26 @@
                     "args": {
                         "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": true,
-                        "train_size": 1.0,
+                        "train_size": 0.9,
+                        "text_cleaners": ["english_cleaners"],
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "dataset_size": 20,
+                        "sr": 16000
+                    }
+                }
+            ]
+        },
+        "val": {
+            "batch_size": 10,
+            "num_workers": 4,
+            "datasets": [
+                {
+                    "type": "LJSpeechDataset",
+                    "args": {
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
+                        "is_train": false,
+                        "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
