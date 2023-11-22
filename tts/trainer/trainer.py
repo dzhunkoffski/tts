@@ -140,7 +140,6 @@ class Trainer(BaseTrainer):
         outputs = self.model(**batch)
         if type(outputs) is dict:
             batch.update(outputs)
-
         batch['loss'] = self.criterion(**batch)
         if is_train:
             batch["loss"].backward()

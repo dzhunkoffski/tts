@@ -29,7 +29,7 @@
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "LJSpeech-1.1",
+                        "dataset_path": "data/LJSpeech-1.1",
                         "is_train": true,
                         "train_size": 1.0,
                         "text_cleaners": ["english_cleaners"],

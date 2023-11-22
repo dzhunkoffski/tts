@@ -2,7 +2,7 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 
-from tts.model.utils import PositionalEncoding, Conv1D
+from tts.model.utils import PositionalEncoding, Conv1D, create_alignment
 from tts import waveglow
 from tts import text
 from tts import audio
@@ -85,25 +85,18 @@ class LengthRegulator(nn.Module):
     
     def forward(self, hidden_phonems, durations):
         # hidden_fonems: tensor of size [B x SEQ_LEN X HIDDEN_SIZE]
-        max_seq_len = 0
-        hidden_mels = []
-        for batch_ix in range(hidden_phonems.size()[0]):
-            indexes = torch.arange(start=0, end=durations.size()[-1]).to(hidden_phonems.device)
-            repeated_indexes = torch.repeat_interleave(indexes, durations[batch_ix])
-            hidden_mel = hidden_phonems[batch_ix, repeated_indexes, :]
-            hidden_mels.append(hidden_mel)
-            max_seq_len = max(max_seq_len, hidden_mel.size()[0])
-        
-        output_mels = []
-        for hidden_mel in hidden_mels:
-            output_mels.append(
-                torch.nn.functional.pad(
-                    input=hidden_mel.t(), pad=(0, max_seq_len - hidden_mel.size()[0]),
-                    mode='constant', value=0
-                ).t()
-            )
-        output_mels = torch.stack(output_mels).to(hidden_phonems.device)
-        return output_mels
+        # durations: tensor of size [B x TOKEN_LEN]
+        expand_max_len = torch.max(
+            torch.sum(durations, -1), -1)[0]
+        alignment = torch.zeros(durations.size(0),
+                                expand_max_len,
+                                durations.size(1)).numpy()
+        alignment = create_alignment(alignment,
+                                     durations.cpu().numpy())
+        alignment = torch.from_numpy(alignment).to(hidden_phonems.device)
+
+        output = alignment @ hidden_phonems
+        return output
 
 class FastSpeechV1(nn.Module):
     def __init__(self, max_len: int, vocab_size: int, pad_idx: int, n_blocks: int, n_heads: int, fft_kernel: int, lr_kernel: int, embed_dim: int, n_mels: int, dropout: float = 0.0) -> None:
@@ -145,7 +138,7 @@ class FastSpeechV1(nn.Module):
         return {"pred_mel": predicted_mel, "pred_duration": pred_durations}
     
     @torch.inference_mode()
-    def text2mel(self, text: str, dataset):
+    def text2voice(self, text: str, dataset):
         x = dataset.text2tokens(text)
         x = x.unsqueeze(0)
         x = x.to(next(self.parameters()).device)
@@ -161,6 +154,7 @@ class FastSpeechV1(nn.Module):
         for i in range(self.n_blocks):
             x = self.mel_blocks[i](x)
         predicted_mel = self.mel_linear(x)
+        predicted_mel = torch.permute(predicted_mel, (0, 2, 1))
         audio = waveglow.inference.inference_audio(predicted_mel, self.vocoder)
         return audio
 

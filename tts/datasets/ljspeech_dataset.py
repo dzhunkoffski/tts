@@ -61,7 +61,7 @@ class LJSpeechDataset(Dataset):
         return text
     
     def __getitem__(self, item):
-        character = self.texts[item][:-1]
+        character = self.texts[item]
         character = text_to_sequence(character, self.text_cleaners)
         character = torch.LongTensor(character)
 
@@ -70,7 +70,6 @@ class LJSpeechDataset(Dataset):
         audio_tensor_spec = torch.tensor(audio_tensor_spec).t()
 
         duration = np.load(os.path.join(self.alignment_path, str(item) + ".npy"))
-        duration = duration[:-1]
         duration = torch.tensor(duration)
 
         return {
@@ -78,5 +77,7 @@ class LJSpeechDataset(Dataset):
             "text": character, 
             "duration": duration, 
             "mel_target": audio_tensor_spec,
+            "mel_spec_path": self.mel_specs[item],
+            "alignment_path": os.path.join(self.alignment_path, str(item) + ".npy")
         }
         
