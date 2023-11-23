@@ -57,7 +57,7 @@ class VarAdaptor(nn.Module):
             energy = self.energy_embedding(energy)
 
         x = x + pitch
-        x = x + energy
+        x = x + 0.000001 * energy
         return x, pred_duration, pred_pitch, pred_energy
             
             
