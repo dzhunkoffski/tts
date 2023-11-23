@@ -38,7 +38,7 @@
                         "text_cleaners": ["english_cleaners"],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
-                        "energy_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
                         "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "dataset_size": 20,
                         "sr": 22050
@@ -59,7 +59,7 @@
                         "text_cleaners": ["english_cleaners"],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
-                        "energy_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
                         "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "dataset_size": 20,
                         "sr": 22050
