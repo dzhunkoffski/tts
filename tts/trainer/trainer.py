@@ -224,7 +224,7 @@ class Trainer(BaseTrainer):
         if is_train:
             coeffs = [1]
         else:
-            coeffs = [1]
+            coeffs = [0.8, 1]
         for i, text in enumerate(text_to_voice):
             for d in coeffs:
                 for p in coeffs:

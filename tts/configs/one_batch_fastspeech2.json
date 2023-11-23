@@ -21,7 +21,9 @@
             "n_mels": 80,
             "conv_channels": 1024,
             "codebook_size": 256,
-            "prenorm": false
+            "prenorm": false,
+            "pitch_scale": 1.0,
+            "energy_scale": 0.000001
         }
     },
     "data": {
@@ -76,7 +78,9 @@
     },
     "loss": {
         "type": "FastSpeech2Loss",
-        "args": {}
+        "args": {
+            "energy_scale": 0.1
+        }
     },
     "metrics": [
         {
@@ -116,6 +120,6 @@
         "visualize": "wandb",
         "wandb_project": "tts",
         "len_epoch": 20,
-        "grad_norm_clip": 10
+        "grad_norm_clip": 1
     }
 }
