@@ -11,14 +11,14 @@ from tts.model.feature_predictor import FeaturePredictor, LengthRegulator
 
 class VarAdaptor(nn.Module):
     def __init__(
-            self, embed_dim: int, feature_kernel: int, dropout: float, 
+            self, embed_dim: int, feature_kernel: int, duration_dropout: float, pitch_dropout: float, energy_dropout,
             min_pitch: float, max_pitch: float, min_energy: float, max_energy: float, 
             codebook_size: int, pitch_scale: float = 1.0, energy_scale: float = 0.000001) -> None:
         super().__init__()
-        self.duration_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=dropout)
+        self.duration_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=duration_dropout)
         self.length_regulator = LengthRegulator()
-        self.pitch_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=dropout)
-        self.energy_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=dropout)
+        self.pitch_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=pitch_dropout)
+        self.energy_predictor = FeaturePredictor(embed_dim=embed_dim, kernel_size=feature_kernel, dropout=energy_dropout)
         
         self.pitch_embedding = nn.Embedding(num_embeddings=codebook_size, embedding_dim=embed_dim)
         self.energy_embedding = nn.Embedding(num_embeddings=codebook_size, embedding_dim=embed_dim)
@@ -73,7 +73,8 @@ class FastSpeechV2(nn.Module):
             self, max_len: int, vocab_size: int, pad_idx: int, n_blocks: int, 
             n_heads: int, fft_kernel: int, feature_kernel: int, embed_dim: int, n_mels: int, 
             conv_channels: int, min_pitch: float, max_pitch: float, codebook_size: int,
-            min_energy: float, max_energy: float, prenorm: bool, pitch_scale: float, energy_scale: float, dropout: float = 0.0
+            min_energy: float, max_energy: float, prenorm: bool, pitch_scale: float, energy_scale: float, 
+            dropout: float = 0.0, duration_dropout: float = 0.0, pitch_dropout: float = 0.0, energy_dropout: float = 0.0
         ) -> None:
         super().__init__()
 
@@ -95,7 +96,8 @@ class FastSpeechV2(nn.Module):
                 FFTBlock(embed_dim=embed_dim, num_heads=n_heads, kernel_size=fft_kernel, dropout=dropout, n_channels=conv_channels) for _ in range(n_blocks)
             ])
         self.variance_adaptor = VarAdaptor(
-            embed_dim=embed_dim, feature_kernel=feature_kernel, dropout=dropout,
+            embed_dim=embed_dim, feature_kernel=feature_kernel, 
+            duration_dropout=duration_dropout, pitch_dropout=pitch_dropout, energy_dropout=energy_dropout,
             min_pitch=min_pitch, max_pitch=max_pitch, min_energy=min_energy, 
             max_energy=max_energy, codebook_size=codebook_size,
             pitch_scale=pitch_scale, energy_scale=energy_scale
