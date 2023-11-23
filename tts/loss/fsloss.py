@@ -23,10 +23,10 @@ class FastSpeech2Loss(nn.Module):
     def __init__(self) -> None:
         super().__init__()
 
-        self.mel_spec_loss = nn.MSELoss()
+        self.mel_spec_loss = nn.L1Loss()
         self.duration_loss = MSLELoss()
-        self.pitch_loss = nn.MSELoss()
-        self.energy_loss = nn.MSELoss()
+        self.pitch_loss = MSLELoss()
+        self.energy_loss = MSLELoss()
     
     def forward(self, mel_target, duration, pitch, energy, pred_mel, pred_duration, pred_pitch, pred_energy, **batch):
-        return self.mel_spec_loss(pred_mel, mel_target) + self.duration_loss(pred_duration, duration) + self.pitch_loss(pred_pitch, pitch) + self.energy_loss(pred_energy, energy)
+        return (self.mel_spec_loss(pred_mel, mel_target) + self.duration_loss(pred_duration, duration) + self.pitch_loss(pred_pitch, pitch) + self.energy_loss(pred_energy, energy)) / 4
