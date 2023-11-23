@@ -27,7 +27,7 @@
             "energy_dropout": 0.5,
             "prenorm": true,
             "pitch_scale": 1.0,
-            "energy_scale": 0.1
+            "energy_scale": 0.5
         }
     },
     "data": {
@@ -82,9 +82,7 @@
     },
     "loss": {
         "type": "FastSpeech2Loss",
-        "args": {
-            "energy_scale": 0.1
-        }
+        "args": {}
     },
     "metrics": [
         {
