@@ -2,6 +2,7 @@ import torch
 from torch import nn
 
 from tts.model.utils import Conv1D, create_alignment
+import torch.nn.functional as F
 
 class FeaturePredictor(nn.Module):
     def __init__(self, embed_dim: int, kernel_size: int, dropout: float = 0.0) -> None:
@@ -26,6 +27,7 @@ class FeaturePredictor(nn.Module):
         x = self.dropout(x)
         x = self.linear(x)
         x = x.squeeze(-1)
+        x = F.relu(x)
         return x
 
 

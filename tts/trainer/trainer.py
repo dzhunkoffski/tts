@@ -256,7 +256,7 @@ class Trainer(BaseTrainer):
         audio = wandb.Audio(audio, sample_rate=self.train_data_obj.sample_rate)
         rows['bruh'] = {
             "text": "I am sorry, Dave, I am afraid I can't do that.",
-            "audio": audio
+            "speech": audio
         }
 
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
