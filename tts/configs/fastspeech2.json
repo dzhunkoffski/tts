@@ -9,18 +9,25 @@
         "spectorgram": []
     },
     "arch": {
-        "type": "FastSpeechV1",
+        "type": "FastSpeechV2",
         "args": {
             "max_len": 5000,
             "pad_idx": 0,
             "n_blocks": 6,
             "n_heads": 2,
             "fft_kernel": 3,
-            "lr_kernel": 3,
+            "feature_kernel": 3,
             "embed_dim": 384,
             "conv_channels": 1536,
+            "codebook_size": 256,
             "n_mels": 80,
-            "dropout": 0.1
+            "dropout": 0.1,
+            "duration_dropout": 0.1,
+            "pitch_dropout": 0.5,
+            "energy_dropout": 0.5,
+            "prenorm": false,
+            "pitch_scale": 1.0,
+            "energy_scale": 0.000001
         }
     },
     "data": {
@@ -37,6 +44,8 @@
                         "text_cleaners": ["english_cleaners"],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "sr": 22050,
                         "dataset_size": 10000
                     }
@@ -56,6 +65,8 @@
                         "text_cleaners": ["english_cleaners"],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "sr": 22050,
                         "dataset_size": 100
                     }
@@ -70,10 +81,29 @@
         }
     },
     "loss": {
-        "type": "FastSpeechLoss",
-        "args": {}
+        "type": "FastSpeech2Loss",
+        "args": {
+            "energy_scale": 0.1
+        }
     },
-    "metrics": [],
+    "metrics": [
+        {
+            "type": "DurationLossMetric",
+            "args": {}
+        },
+        {
+            "type": "PitchLossMetric",
+            "args": {}
+        },
+        {
+            "type": "EnergyLossMetric",
+            "args": {}
+        },
+        {
+            "type": "MelLossMetric",
+            "args": {}
+        }
+    ],
     "lr_scheduler": {
         "type": "OneCycleLR",
         "args": {
