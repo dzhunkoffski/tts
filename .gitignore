@@ -167,6 +167,7 @@ cython_debug/
 *.bz2
 
 # Serialized files
+checkpoint
 *.npy
 *.pt
 
@@ -178,3 +179,4 @@ saved
 wandb
 pitch_contour
 energy
+audio_samples

@@ -38,14 +38,14 @@
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "data/LJSpeech-1.1",
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": true,
                         "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
-                        "mel_spec_path": "mels",
-                        "alignment_path": "alignments",
-                        "energy_path": "energy",
-                        "pitch_contour_path": "pitch_contour",
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "sr": 22050,
                         "dataset_size": 10000
                     }
@@ -59,14 +59,14 @@
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "data/LJSpeech-1.1",
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": false,
                         "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
-                        "mel_spec_path": "mels",
-                        "alignment_path": "alignments",
-                        "energy_path": "energy",
-                        "pitch_contour_path": "pitch_contour",
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
                         "sr": 22050,
                         "dataset_size": 100
                     }

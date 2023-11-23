@@ -25,9 +25,9 @@
             "duration_dropout": 0.1,
             "pitch_dropout": 0.5,
             "energy_dropout": 0.5,
-            "prenorm": true,
+            "prenorm": false,
             "pitch_scale": 1.0,
-            "energy_scale": 0.5
+            "energy_scale": 1e-06
         }
     },
     "data": {
@@ -41,7 +41,9 @@
                         "dataset_path": "data/LJSpeech-1.1",
                         "is_train": true,
                         "train_size": 0.9,
-                        "text_cleaners": ["english_cleaners"],
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ],
                         "mel_spec_path": "mels",
                         "alignment_path": "alignments",
                         "energy_path": "energy",
@@ -62,7 +64,32 @@
                         "dataset_path": "data/LJSpeech-1.1",
                         "is_train": false,
                         "train_size": 0.9,
-                        "text_cleaners": ["english_cleaners"],
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ],
+                        "mel_spec_path": "mels",
+                        "alignment_path": "alignments",
+                        "energy_path": "energy",
+                        "pitch_contour_path": "pitch_contour",
+                        "sr": 22050,
+                        "dataset_size": 100
+                    }
+                }
+            ]
+        },
+        "test": {
+            "batch_size": 16,
+            "num_workers": 4,
+            "datasets": [
+                {
+                    "type": "LJSpeechDataset",
+                    "args": {
+                        "dataset_path": "data/LJSpeech-1.1",
+                        "is_train": false,
+                        "train_size": 0.9,
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ],
                         "mel_spec_path": "mels",
                         "alignment_path": "alignments",
                         "energy_path": "energy",
@@ -77,12 +104,14 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 3e-4
+            "lr": 0.0003
         }
     },
     "loss": {
         "type": "FastSpeech2Loss",
-        "args": {}
+        "args": {
+            "energy_scale": 0.1
+        }
     },
     "metrics": [
         {
@@ -108,7 +137,7 @@
             "steps_per_epoch": 1000,
             "epochs": 80,
             "anneal_strategy": "cos",
-            "max_lr": 3e-4,
+            "max_lr": 0.0003,
             "pct_start": 0.1
         }
     },

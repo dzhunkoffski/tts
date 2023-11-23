@@ -6,11 +6,16 @@ from pathlib import Path
 import torch
 from tqdm import tqdm
 
-import hw_asr.model as module_model
-from hw_asr.trainer import Trainer
-from hw_asr.utils import ROOT_PATH
-from hw_asr.utils.object_loading import get_dataloaders
-from hw_asr.utils.parse_config import ConfigParser
+import tts.model as module_model
+from tts.trainer import Trainer
+from tts.utils import ROOT_PATH
+from tts.utils.object_loading import get_dataloaders
+from tts.utils.parse_config import ConfigParser
+
+from tts.text.symbols import symbols
+
+from scipy.io.wavfile import write
+import numpy as np
 
 DEFAULT_CHECKPOINT_PATH = ROOT_PATH / "default_test_model" / "checkpoint.pth"
 
@@ -21,14 +26,19 @@ def main(config, out_file):
     # define cpu or gpu if possible
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    # text_encoder
-    text_encoder = config.get_text_encoder()
-
     # setup data_loader instances
-    dataloaders = get_dataloaders(config, text_encoder)
+    dataloaders = get_dataloaders(config)
+
+    min_pitch, max_pitch = dataloaders['train'].dataset.pitch_min, dataloaders['train'].dataset.pitch_max
+    print("Pitch range:", min_pitch, max_pitch)
+    min_energy, max_energy = dataloaders['train'].dataset.energy_min, dataloaders['train'].dataset.energy_max
+    print("Energy range:", min_energy, max_energy)
 
     # build model architecture
-    model = config.init_obj(config["arch"], module_model, n_class=len(text_encoder))
+    model = config.init_obj(
+        config["arch"], module_model, 
+        vocab_size=len(symbols), min_pitch=min_pitch, max_pitch=max_pitch, min_energy=min_energy, max_energy=max_energy
+    )
     logger.info(model)
 
     logger.info("Loading checkpoint: {} ...".format(config.resume))
@@ -42,36 +52,32 @@ def main(config, out_file):
     model = model.to(device)
     model.eval()
 
-    results = []
+    write_to = "audio_samples"
+    os.mkdir(write_to)
+    text_samples = [
+        'A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest',
+        'Massachusetts Institute of Technology may be best known for its math, science and engineering education',
+        'Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space'
+    ]
+    duration_coeffs = [0.8, 1, 1.2]
+    pitch_coeffs = [0.5, 0.8, 1, 1.2, 1.5]
+    energy_coeffs = [0.8, 1, 1.2]
 
     with torch.no_grad():
-        for batch_num, batch in enumerate(tqdm(dataloaders["test"])):
-            batch = Trainer.move_batch_to_device(batch, device)
-            output = model(**batch)
-            if type(output) is dict:
-                batch.update(output)
-            else:
-                batch["logits"] = output
-            batch["log_probs"] = torch.log_softmax(batch["logits"], dim=-1)
-            batch["log_probs_length"] = model.transform_input_lengths(
-                batch["spectrogram_length"]
-            )
-            batch["probs"] = batch["log_probs"].exp().cpu()
-            batch["argmax"] = batch["probs"].argmax(-1)
-            for i in range(len(batch["text"])):
-                argmax = batch["argmax"][i]
-                argmax = argmax[: int(batch["log_probs_length"][i])]
-                results.append(
-                    {
-                        "ground_trurh": batch["text"][i],
-                        "pred_text_argmax": text_encoder.ctc_decode(argmax.cpu().numpy()),
-                        "pred_text_beam_search": text_encoder.ctc_beam_search(
-                            batch["probs"][i], batch["log_probs_length"][i], beam_size=100
-                        )[:10],
-                    }
-                )
-    with Path(out_file).open("w") as f:
-        json.dump(results, f, indent=2)
+        for i, text in enumerate(text_samples):
+            for dur in duration_coeffs:
+                for pitch in pitch_coeffs:
+                    for energy in energy_coeffs:
+                        output = model.text2voice(
+                            text, dataset=dataloaders['train'].dataset,
+                            duration_coeff=dur, pitch_coeff=pitch, energy_coeff=energy
+                        )
+                        write(
+                            f'{write_to}/{i}_d{dur}_p{pitch}_e{energy}.wav', 
+                            dataloaders['train'].dataset.sample_rate,
+                            output['audio']
+                        )
+                        
 
 
 if __name__ == "__main__":
