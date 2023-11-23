@@ -176,3 +176,5 @@ mels
 alignments
 saved
 wandb
+pitch_contour
+energy

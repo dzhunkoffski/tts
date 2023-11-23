@@ -2,10 +2,17 @@
 DL-AUDIO homework
 
 ## Data:
+Audio:
 ```bash
-wget https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2
+wget https://data.keithito.com/data/speech/LJSpeech-1.1.tar.bz2 -o /dev/null --show-progress
 mkdir data
-tar -xf LJSpeech-1.1.tar.bz2
+tar -xvf LJSpeech-1.1.tar.bz2 >> /dev/null
+mv LJSpeech-1.1 data/LJSpeech-1.1
+```
+Text:
+```bash
+gdown https://drive.google.com/u/0/uc?id=1-EdH0t0loc6vPiuVtXdhsDtzygWNSNZx
+mv train.txt data/LJSpeech-1.1
 ```
 
 ## FastSpeech to use waveglow code, data and audio preprocessing from this repo

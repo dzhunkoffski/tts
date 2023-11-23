@@ -2,7 +2,7 @@
     "name": "fast_speech_v1",
     "n_gpu": 1,
     "preprocessing": {
-        "sr": 16000
+        "sr": 22050
     },
     "augmentations": {
         "wave": [],
@@ -11,57 +11,58 @@
     "arch": {
         "type": "FastSpeechV2",
         "args": {
-            "max_len": 10000,
+            "max_len": 5000,
             "pad_idx": 0,
-            "n_blocks": 1,
+            "n_blocks": 4,
             "n_heads": 2,
             "fft_kernel": 3,
             "feature_kernel": 3,
-            "embed_dim": 16,
-            "conv_channels": 8,
+            "embed_dim": 384,
             "n_mels": 80,
-            "codebook_size": 8,
+            "conv_channels": 1024,
+            "codebook_size": 256,
             "prenorm": false
         }
     },
     "data": {
         "train": {
-            "batch_size": 3,
-            "num_workers": 2,
+            "batch_size": 10,
+            "num_workers": 4,
             "datasets": [
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "data/LJSpeech-1.1",
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": true,
                         "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
-                        "mel_spec_path": "mels",
-                        "alignment_path": "alignments",
-                        "energy_path": "energy",
-                        "pitch_contour_path": "pitch_contour",
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "dataset_size": 20,
                         "sr": 22050
                     }
                 }
             ]
         },
         "val": {
-            "batch_size": 3,
-            "num_workers": 2,
+            "batch_size": 10,
+            "num_workers": 4,
             "datasets": [
                 {
                     "type": "LJSpeechDataset",
                     "args": {
-                        "dataset_path": "data/LJSpeech-1.1",
-                        "is_train": true,
+                        "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
+                        "is_train": false,
                         "train_size": 0.9,
                         "text_cleaners": ["english_cleaners"],
-                        "mel_spec_path": "mels",
-                        "alignment_path": "alignments",
-                        "energy_path": "energy",
-                        "pitch_contour_path": "pitch_contour",
-                        "sr": 22050,
-                        "dataset_size": 10
+                        "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
+                        "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
+                        "energy_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "pitch_contour_path": "/kaggle/input/tts-ljspeech-pitch-contour/pitch_contour",
+                        "dataset_size": 20,
+                        "sr": 22050
                     }
                 }
             ]
@@ -81,15 +82,15 @@
     "lr_scheduler": {
         "type": "OneCycleLR",
         "args": {
-            "steps_per_epoch": 10,
-            "epochs": 50,
+            "steps_per_epoch": 20,
+            "epochs": 100,
             "anneal_strategy": "cos",
-            "max_lr": 0.001,
-            "pct_start": 0.07
+            "max_lr": 3e-4,
+            "pct_start": 0.1
         }
     },
     "trainer": {
-        "epochs": 50,
+        "epochs": 100,
         "save_dir": "saved/",
         "save_period": 5,
         "verbosity": 1,
@@ -97,7 +98,7 @@
         "early_stop": 100,
         "visualize": "wandb",
         "wandb_project": "tts",
-        "len_epoch": 10,
-        "grad_norm_clip": 100
+        "len_epoch": 20,
+        "grad_norm_clip": 1
     }
 }

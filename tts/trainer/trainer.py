@@ -17,6 +17,7 @@ from tts.utils import inf_loop, MetricTracker
 
 import wandb
 
+import os
 
 class Trainer(BaseTrainer):
     """
@@ -64,7 +65,7 @@ class Trainer(BaseTrainer):
         """
         Move all necessary tensors to the HPU
         """
-        for tensor_for_gpu in ["text", "duration", "mel_target"]:
+        for tensor_for_gpu in ["text", "duration", "mel_target", "pitch", "energy"]:
             batch[tensor_for_gpu] = batch[tensor_for_gpu].to(device)
         return batch
 
@@ -214,21 +215,50 @@ class Trainer(BaseTrainer):
             text_to_voice = [
                 'A defibrillator is a device that gives a high energy electric shock to the heart of someone who is in cardiac arrest',
                 'Massachusetts Institute of Technology may be best known for its math, science and engineering education',
-                'Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space',
-                "I am sorry, Dave, I am afraid I can't do that.",
-                "Just what do you think you're doing, Dave? Dave, I really think I'm entitled to an answer to that question.",
-                "Dai-sy, dai-sy, give me your answer, do, I'm half cra-zy, all for the love of you. It won't be a sty-lish mar-riage, I can't a-fford a car-riage. But you'll look sweet upon the seat of a bicycle - built - for - two."
+                'Wasserstein distance or Kantorovich Rubinstein metric is a distance function defined between probability distributions on a given metric space'
             ]
         else:
+            examples_to_log = min(examples_to_log, len(raw_text))
             text_to_voice = sample(raw_text, examples_to_log)
         rows = {}
+        if is_train:
+            coeffs = [1]
+        else:
+            coeffs = [0.8, 1, 1.2]
         for i, text in enumerate(text_to_voice):
-            audio = self.model.text2voice(text, dataset=self.train_data_obj)
-            audio = wandb.Audio(audio, sample_rate=self.train_data_obj.sample_rate)
-            rows[i] = {
-                "text": text,
-                "speech": audio
-            }
+            for d in coeffs:
+                for p in coeffs:
+                    for e in coeffs:
+                        output = self.model.text2voice(
+                            text, dataset=self.train_data_obj,
+                            duration_coeff=d, pitch_coeff=p, energy_coeff=e
+                        )
+                        audio = output['audio']
+                        melspec = output['mel_spec']
+                        audio = wandb.Audio(audio, sample_rate=self.train_data_obj.sample_rate)
+                        rows[f'{i}.d={d}.p={p}.e={e}'] = {
+                            "duration_coeff": d,
+                            "pithc_coeff": p,
+                            "energy_coeff": e,
+                            "text": text,
+                            "speech": audio
+                        }
+
+                        if not is_train:
+                            wandb.log({
+                                "config": f'd={d}. p={p}. e={e}',
+                                "text": text,
+                                "speech": audio
+                            })
+
+        output = self.model.text2voice("I am sorry, Dave, I am afraid I can't do that.", dataset=self.train_data_obj, pitch_coeff=0.5)
+        audio = output['audio']
+        audio = wandb.Audio(audio, sample_rate=self.train_data_obj.sample_rate)
+        rows['bruh'] = {
+            "text": "I am sorry, Dave, I am afraid I can't do that.",
+            "audio": audio
+        }
+
         self.writer.add_table("predictions", pd.DataFrame.from_dict(rows, orient="index"))
 
     def _log_spectrogram(self, spectrogram_batch):

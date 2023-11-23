@@ -1,5 +1,6 @@
-from tts.loss.fsloss import FastSpeechLoss
+from tts.loss.fsloss import FastSpeechLoss, FastSpeech2Loss
 
 __all__ = [
-    "FastSpeechLoss"
+    "FastSpeechLoss",
+    "FastSpeech2Loss"
 ]

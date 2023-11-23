@@ -30,8 +30,14 @@ def main(config):
     # setup data_loader instances
     dataloaders = get_dataloaders(config)
 
+    min_pitch, max_pitch = dataloaders['train'].dataset.pitch_min, dataloaders['train'].dataset.pitch_max
+    min_energy, max_energy = dataloaders['train'].dataset.energy_min, dataloaders['train'].dataset.energy_max
+
     # build model architecture, then print to console
-    model = config.init_obj(config["arch"], module_arch, vocab_size=len(symbols))
+    model = config.init_obj(
+        config["arch"], module_arch, 
+        vocab_size=len(symbols), min_pitch=min_pitch, max_pitch=max_pitch, min_energy=min_energy, max_energy=max_energy
+    )
     logger.info(model)
 
     # prepare for (multi-device) GPU training
