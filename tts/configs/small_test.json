@@ -77,7 +77,24 @@
         "type": "FastSpeech2Loss",
         "args": {}
     },
-    "metrics": [],
+    "metrics": [
+        {
+            "type": "DurationLossMetric",
+            "args": {}
+        },
+        {
+            "type": "PitchLossMetric",
+            "args": {}
+        },
+        {
+            "type": "EnergyLossMetric",
+            "args": {}
+        },
+        {
+            "type": "MelLossMetric",
+            "args": {}
+        }
+    ],
     "lr_scheduler": {
         "type": "OneCycleLR",
         "args": {
