@@ -31,7 +31,9 @@ def main(config):
     dataloaders = get_dataloaders(config)
 
     min_pitch, max_pitch = dataloaders['train'].dataset.pitch_min, dataloaders['train'].dataset.pitch_max
+    print("Pitch range:", min_pitch, max_pitch)
     min_energy, max_energy = dataloaders['train'].dataset.energy_min, dataloaders['train'].dataset.energy_max
+    print("Energy range:", min_energy, max_energy)
 
     # build model architecture, then print to console
     model = config.init_obj(

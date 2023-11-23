@@ -244,13 +244,6 @@ class Trainer(BaseTrainer):
                             "speech": audio
                         }
 
-                        if not is_train:
-                            wandb.log({
-                                "config": f'd={d}. p={p}. e={e}',
-                                "text": text,
-                                "speech": audio
-                            })
-
         output = self.model.text2voice("I am sorry, Dave, I am afraid I can't do that.", dataset=self.train_data_obj, pitch_coeff=0.5)
         audio = output['audio']
         audio = wandb.Audio(audio, sample_rate=self.train_data_obj.sample_rate)
