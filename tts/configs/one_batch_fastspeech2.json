@@ -99,6 +99,6 @@
         "visualize": "wandb",
         "wandb_project": "tts",
         "len_epoch": 20,
-        "grad_norm_clip": 1
+        "grad_norm_clip": 100
     }
 }
