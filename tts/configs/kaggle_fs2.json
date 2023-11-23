@@ -27,7 +27,7 @@
             "energy_dropout": 0.5,
             "prenorm": true,
             "pitch_scale": 1.0,
-            "energy_scale": 0.5
+            "energy_scale": 1e-06
         }
     },
     "data": {
@@ -41,7 +41,9 @@
                         "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": true,
                         "train_size": 0.9,
-                        "text_cleaners": ["english_cleaners"],
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
                         "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
@@ -62,7 +64,9 @@
                         "dataset_path": "/kaggle/input/tts-ljspeech-audio/LJSpeech-1.1",
                         "is_train": false,
                         "train_size": 0.9,
-                        "text_cleaners": ["english_cleaners"],
+                        "text_cleaners": [
+                            "english_cleaners"
+                        ],
                         "mel_spec_path": "/kaggle/input/tts-ljspeech-mels/mels",
                         "alignment_path": "/kaggle/input/tts-ljspeech-alignments/alignments",
                         "energy_path": "/kaggle/input/tts-ljspeech-energy/energy",
@@ -77,12 +81,14 @@
     "optimizer": {
         "type": "Adam",
         "args": {
-            "lr": 3e-4
+            "lr": 0.0003
         }
     },
     "loss": {
         "type": "FastSpeech2Loss",
-        "args": {}
+        "args": {
+            "energy_scale": 0.1
+        }
     },
     "metrics": [
         {
@@ -108,7 +114,7 @@
             "steps_per_epoch": 1000,
             "epochs": 80,
             "anneal_strategy": "cos",
-            "max_lr": 3e-4,
+            "max_lr": 0.0003,
             "pct_start": 0.1
         }
     },
