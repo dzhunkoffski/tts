@@ -1,5 +1,5 @@
 # tts
-DL-AUDIO homework
+DL-AUDIO homework. FastSpeech2 implementation which solves text-to-speech problem. More details on model, train configuration and results examples located in wandb [report](https://wandb.ai/dzhunkoffski/tts/reports/Report--Vmlldzo2NTg1MTk3)
 
 ## Data:
 Audio:
